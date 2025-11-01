@@ -89,17 +89,32 @@ class Transform3D:
         new_matrix = self.matrix @ other.matrix
         return Transform3D(new_matrix)
 
+    # [!!!] 수정된 부분 [!!!]
     def __str__(self):
         """
         print() 함수로 객체를 출력할 때의 형식을 지정합니다.
+        (소수점 2자리, 고정 소수점 표기)
         """
         trans = self.get_translation()
         euler = self.get_euler_angles()
         
+        # Translation과 Euler Angles를 소수점 2자리(f)로 포맷팅
+        trans_str = f"[{trans[0]:.2f}, {trans[1]:.2f}, {trans[2]:.2f}]"
+        euler_str = f"[{euler[0]:.2f}, {euler[1]:.2f}, {euler[2]:.2f}]"
+        
+        # 4x4 행렬을 numpy.array2string을 사용해 포맷팅
+        # precision=2: 소수점 2자리
+        # suppress_small=True: scientific notation(지수 표기법) 억제
+        # formatter: 모든 float를 "0.2f" (소수점 2자리 고정) 형식으로 강제
+        matrix_str_np = np.array2string(self.matrix, 
+                                        precision=2, 
+                                        suppress_small=True, 
+                                        formatter={'float_kind': lambda x: f"{x:0.2f}"})
+        
         return (f"Transform3D:\n"
-                f"  Translation (x,y,z): [{trans[0]:.3f}, {trans[1]:.3f}, {trans[2]:.3f}]\n"
-                f"  Euler Angles (rx,ry,rz): [{euler[0]:.3f}, {euler[1]:.3f}, {euler[2]:.3f}] (deg)\n"
-                f"  4x4 Matrix:\n{np.round(self.matrix, 3)}")
+                f"  Translation (x,y,z): {trans_str}\n"
+                f"  Euler Angles (rx,ry,rz): {euler_str} (deg)\n"
+                f"  4x4 Matrix:\n{matrix_str_np}")
     
     # --- [시각화 헬퍼 메서드] ---
     
