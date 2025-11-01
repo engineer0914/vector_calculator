@@ -18,10 +18,10 @@ print("--- 로봇-카메라 좌표계 변환 시뮬레이션 (DH 파라미터 �
 # --- 1. 카메라 설정 (보정) ---
 print("\n[1] 카메라 보정 행렬(T_base_cam) 설정...")
 # T_base_cam: 로봇 베이스 기준 카메라의 포즈
-T_base_cam = Transform3D.from_xyz_rpy(x=1000.0, y=0.0, z=500.0, # 단위를 mm로 조정
-                                      rx=0.0, ry=-90.0, rz=0.0, 
+T_base_cam = Transform3D.from_xyz_rpy(x=0.0, y=500.0, z=500.0, # 단위를 mm로 조정
+                                      rx=0.0, ry=-180.0, rz=0.0, 
                                       degrees=True)
-camera = Camera(T_base_cam) 
+camera = Camera(T_base_cam)
 print(f"카메라 보정 (T_base_cam):\n{camera.T_base_cam}")
 
 
@@ -35,7 +35,8 @@ except FileNotFoundError as e:
     exit()
 
 # 로봇 관절 각도를 'Home' 자세 (예시)로 설정 (단위: 도)
-joint_angles = [0, 0, -90, 0, -90, 0] # 관절 각도 변경 가능
+joint_angles = [0, 0, 90, 0, 90, -90] # 관절 각도 변경 가능
+joint_angles = [0, 0, 0, 0, 0, 0] # 관절 각도 변경 가능
 robot.set_joint_angles(joint_angles)
 
 
@@ -68,31 +69,28 @@ print("-> 로봇은 이 (x,y,z)와 (rx,ry,rz) 값을 타겟으로 역기구학(I
 print("\n--- 5. 3D 시각화 ---")
 
 # 5.1. 3D 그래프 설정
-fig = plt.figure(figsize=(12, 10)) # 창 크기 약간 키움
+fig = plt.figure(figsize=(12, 10)) 
 ax = fig.add_subplot(111, projection='3d')
 ax.set_xlabel('X [mm]')
 ax.set_ylabel('Y [mm]')
 ax.set_zlabel('Z [mm]')
 ax.set_title('Robot-Camera-Object in 3D Space')
 
-plot_range = 1000 # ±1000mm 범위
+plot_range = 1000 
 ax.set_xlim([-plot_range, plot_range])
 ax.set_ylim([-plot_range, plot_range])
 ax.set_zlim([0, plot_range * 1.5]) 
 
-# 3D 뷰의 초기 각도를 설정합니다. (Z축이 위로 가도록)
 ax.view_init(elev=25, azim=-60) 
 
 
 # 5.2. 좌표계 그리기 헬퍼 함수
-def draw_frame(ax, T: Transform3D, label="", scale=100, linewidth=2): # linewidth 인자 추가
-    """주어진 Transform3D 객체의 원점과 X,Y,Z 축을 그립니다."""
+def draw_frame(ax, T: Transform3D, label="", scale=100, linewidth=2): 
+    # ... (이 함수는 수정할 필요 없이 그대로 둡니다) ...
     origin, x_axis_vec, y_axis_vec, z_axis_vec = T.get_axes_vectors(scale=scale)
 
-    # 원점 그리기
     ax.scatter(origin[0], origin[1], origin[2], marker='o', s=50, color='black')
     
-    # 축 벡터 그리기 (RGB = X, Y, Z)
     ax.quiver(origin[0], origin[1], origin[2],
               x_axis_vec[0] - origin[0], x_axis_vec[1] - origin[1], x_axis_vec[2] - origin[2],
               color='red', linewidth=linewidth, arrow_length_ratio=0.1) # X-axis (Red)
@@ -103,10 +101,8 @@ def draw_frame(ax, T: Transform3D, label="", scale=100, linewidth=2): # linewidt
               z_axis_vec[0] - origin[0], z_axis_vec[1] - origin[1], z_axis_vec[2] - origin[2],
               color='blue', linewidth=linewidth, arrow_length_ratio=0.1) # Z-axis (Blue)
 
-    # 라벨 추가
-    if label: # 라벨이 있을 경우에만 표시
+    if label: 
         ax.text(origin[0] + scale * 0.1, origin[1] + scale * 0.1, origin[2], label, color='black', fontsize=9)
-
 
 # 5.3. 로봇 베이스 좌표계 그리기 (World Frame과 동일하다고 가정)
 draw_frame(ax, Transform3D.identity(), label='World/Base Frame', scale=150, linewidth=3)
@@ -123,8 +119,8 @@ for i, T_link in enumerate(link_poses):
     # [수정] 엔드 이펙터(마지막 링크의 끝)는 다른 색상으로
     if i == len(link_poses) - 1: # 마지막 링크인 경우
         draw_frame(ax, T_link, label=f'EE Frame', scale=70, linewidth=2) # 엔드 이펙터 프레임
-        ax.scatter(T_link.get_origin()[0], T_link.get_origin()[1], T_link.get_origin()[2],
-                   marker='X', s=200, color='cyan', label='End Effector Position', depthshade=True) # 더 큰 마커
+        # ax.scatter(T_link.get_origin()[0], T_link.get_origin()[1], T_link.get_origin()[2],
+        #            marker='X', s=200, color='cyan', label='End Effector Position', depthshade=True) # 더 큰 마커
     else:
         draw_frame(ax, T_link, label=f'Link {i+1} End', scale=50, linewidth=1.5) # 일반 링크 끝의 좌표계
 
@@ -174,8 +170,25 @@ ax.scatter(obj_origin[0], obj_origin[1], obj_origin[2],
 
 
 # 범례 표시
-ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1)) # 범례를 그래프 밖에 표시하여 겹치지 않게 함
-fig.tight_layout() # 범례가 잘 보이도록 레이아웃 조정
+ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1.0), fontsize=10) # 범례를 그래프 밖에 표시
+
+# [추가] 축 색상 키(표) 텍스트 상자 추가
+key_text = "Axis Color Key (표)\n" \
+           "----------------------\n" \
+           "  Red   = X-axis\n" \
+           "  Green = Y-axis\n" \
+           "  Blue  = Z-axis"
+
+# [!!!] 수정된 부분: ax.text -> ax.text2D [!!!]
+# 범례(legend) 아래쪽에 텍스트 상자를 위치시킵니다.
+ax.text2D(1.05, 0.75, key_text, transform=ax.transAxes, 
+          fontsize=10, verticalalignment='top', 
+          bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.5'))
+
+# [수정] 범례와 텍스트 상자가 잘리지 않도록 그래프 레이아웃을 조정합니다.
+fig.tight_layout(rect=[0, 0, 0.8, 1]) 
+
+# 3D 그래프 보여주기
 plt.show()
 
 print("\n--- 시뮬레이션 종료 ---")

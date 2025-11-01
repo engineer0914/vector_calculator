@@ -20,7 +20,7 @@ data = """link_id,theta_var,theta_offset_deg,d,a,alpha_deg
 4,theta3,0,148.4,0,0
 5,0,0,0,392.0,0
 6,theta4,90,-110.7,0,0
-7,0,0,0,0,-90
+7,0,0,0,0,90
 8,theta5,0,110.7,0,-90
 9,theta6,0,-96.7,0,90
 """
