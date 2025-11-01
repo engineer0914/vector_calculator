@@ -191,4 +191,4 @@ fig.tight_layout(rect=[0, 0, 0.8, 1])
 # 3D 그래프 보여주기
 plt.show()
 
-print("\n--- 시뮬레이션 종료 ---")
+print("\n--- 시뮬레이션 종료 ---") 
