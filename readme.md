@@ -1,8 +1,4 @@
-네, 알겠습니다. 제공해주신 `main.py` 코드(스크립트 내에 값이 직접 지정된 버전)를 기반으로 `README.md` 파일을 작성했습니다.
-
------
-
-\<p align="center"\>\<img src="example\_photo\_1.png" alt="Robot Arm Simulation"\>\</p\>
+![Robot Arm Simulation](example_photo_1.png)
 
 # 🤖 6축 로봇팔 3D 시뮬레이터 (FK & 좌표계 변환)
 
