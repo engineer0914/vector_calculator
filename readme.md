@@ -1,4 +1,4 @@
-\<p align="center"\>\<img src="example\_photo\_1.png" alt="Robot Arm Simulation"\>\</p\>
+![Robot Arm Simulation](example_photo_1.png)
 
 # 🤖 6축 로봇팔 3D 시뮬레이터 (FK & 좌표계 변환)
 
