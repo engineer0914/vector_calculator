@@ -2,22 +2,31 @@
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-import pandas as pd  # pandas 임포트 추가
-import os  # 파일 존재 확인을 위해 추가
+import pandas as pd
+import os
+import matplotlib.pyplot as plt # 3D 시각화용
+from mpl_toolkits.mplot3d import Axes3D # 3D 시각화용
 
 class Transform3D:
     """
     3D 공간의 변환(위치와 회전)을 나타내는 4x4 동차 변환 행렬 클래스.
-    (이 클래스는 이전과 동일하며, 수정할 필요가 없습니다.)
     """
     
     def __init__(self, matrix):
+        """
+        4x4 numpy 배열로 객체를 초기화합니다.
+        """
         if not isinstance(matrix, np.ndarray) or matrix.shape != (4, 4):
             raise ValueError("입력값은 4x4 numpy 배열이어야 합니다.")
         self.matrix = matrix
 
     @staticmethod
     def from_xyz_rpy(x, y, z, rx, ry, rz, degrees=True):
+        """
+        [정적 메서드]
+        x, y, z 이동과 'xyz' 순서의 오일러 각(Roll, Pitch, Yaw)으로 
+        새로운 Transform3D 객체를 생성합니다.
+        """
         rotation = R.from_euler('xyz', [rx, ry, rz], degrees=degrees)
         rot_matrix = rotation.as_matrix()
         
@@ -29,19 +38,36 @@ class Transform3D:
 
     @staticmethod
     def identity():
+        """
+        [정적 메서드]
+        단위 행렬(아무 변환도 하지 않음)을 가진 Transform3D 객체를 생성합니다.
+        """
         return Transform3D(np.identity(4))
 
     def get_translation(self):
+        """
+        변환 행렬에서 이동(translation) 벡터 [x, y, z]를 추출합니다.
+        """
         return self.matrix[0:3, 3]
 
     def get_rotation_matrix(self):
+        """
+        변환 행렬에서 3x3 회전 행렬(Rotation Matrix)을 추출합니다.
+        """
         return self.matrix[0:3, 0:3]
 
     def get_euler_angles(self, sequence='xyz', degrees=True):
+        """
+        3x3 회전 행렬에서 오일러 각 [rx, ry, rz]를 추출합니다.
+        """
         rotation = R.from_matrix(self.get_rotation_matrix())
         return rotation.as_euler(sequence, degrees=degrees)
 
     def inverse(self):
+        """
+        변환의 역행렬을 계산하여 새 Transform3D 객체로 반환합니다.
+        (예: T_A_B -> T_B_A)
+        """
         R_inv = self.get_rotation_matrix().T
         t = self.get_translation()
         t_inv = -R_inv @ t
@@ -53,6 +79,10 @@ class Transform3D:
         return Transform3D(inv_matrix)
 
     def __matmul__(self, other):
+        """
+        행렬 곱 연산자(@)를 오버로딩합니다. (예: T_A_B @ T_B_C = T_A_C)
+        두 Transform3D 객체의 변환을 연결(chain)합니다.
+        """
         if not isinstance(other, Transform3D):
             raise TypeError("Transform3D 객체와만 행렬 곱(@)이 가능합니다.")
         
@@ -60,6 +90,9 @@ class Transform3D:
         return Transform3D(new_matrix)
 
     def __str__(self):
+        """
+        print() 함수로 객체를 출력할 때의 형식을 지정합니다.
+        """
         trans = self.get_translation()
         euler = self.get_euler_angles()
         
@@ -67,9 +100,32 @@ class Transform3D:
                 f"  Translation (x,y,z): [{trans[0]:.3f}, {trans[1]:.3f}, {trans[2]:.3f}]\n"
                 f"  Euler Angles (rx,ry,rz): [{euler[0]:.3f}, {euler[1]:.3f}, {euler[2]:.3f}] (deg)\n"
                 f"  4x4 Matrix:\n{np.round(self.matrix, 3)}")
+    
+    # --- [시각화 헬퍼 메서드] ---
+    
+    def get_origin(self):
+        """이 변환의 원점(이동 벡터)을 반환합니다."""
+        return self.matrix[0:3, 3]
+
+    def get_axes_vectors(self, scale=0.1):
+        """
+        이 변환의 X, Y, Z 축 벡터를 반환합니다.
+        (시각화를 위해 원점에서 뻗어나가는 벡터)
+        """
+        origin = self.get_origin()
+        rot_mat = self.get_rotation_matrix()
+        
+        # x-축 (빨강)
+        x_axis = origin + rot_mat[:, 0] * scale
+        # y-축 (초록)
+        y_axis = origin + rot_mat[:, 1] * scale
+        # z-축 (파랑)
+        z_axis = origin + rot_mat[:, 2] * scale
+        
+        return origin, x_axis, y_axis, z_axis
 
 # -----------------------------------------------------------
-# [수정됨] RobotArm 클래스
+# RobotArm 클래스
 # -----------------------------------------------------------
 class RobotArm:
     """
@@ -123,12 +179,24 @@ class RobotArm:
 
     def get_end_effector_pose(self):
         """
-        [수정됨]
         현재 관절 각도를 기준으로 실제 순기구학(Forward Kinematics)을 계산합니다.
         T_0_n = T_0_1 @ T_1_2 @ ... @ T_(n-1)_n
-        """
         
-        # 1. 6개 관절 각도를 DH 테이블의 'theta_var'에 매핑
+        참고: 이 메서드는 get_all_link_poses()의 마지막 요소를 반환하는 것과 같습니다.
+        """
+        all_poses = self.get_all_link_poses()
+        return all_poses[-1] # 마지막 링크(EE)의 포즈 반환
+    
+    def get_all_link_poses(self):
+        """
+        [시각화용]
+        각 링크의 끝 지점(관절 조인트 또는 엔드 이펙터)의 
+        로봇 베이스 좌표계 기준 Transform3D 포즈를 리스트로 반환합니다.
+        """
+        link_poses = []
+        # T_current는 numpy 배열로 누적 계산
+        T_current = self.base_pose.matrix 
+        
         joint_map = {
             'theta1': self.joint_angles[0],
             'theta2': self.joint_angles[1],
@@ -139,9 +207,6 @@ class RobotArm:
             '0': 0  # 고정 링크용
         }
         
-        # 2. 모든 변환 행렬을 순차적으로 곱합니다.
-        T_total = np.identity(4)
-        
         for _, row in self.dh_table.iterrows():
             # CSV에서 파라미터 읽기
             theta_var = row['theta_var']
@@ -151,25 +216,21 @@ class RobotArm:
             alpha = row['alpha_deg']
             
             # 현재 링크의 최종 theta 각도 계산
-            # (변수 각도 + 오프셋 각도)
             current_theta_deg = joint_map[theta_var] + theta_offset
             
             # 이 링크의 변환 행렬 T_i-1_i 계산
             T_link = self._create_T_matrix(current_theta_deg, d, a, alpha)
             
-            # 누적 곱
-            T_total = T_total @ T_link
-        
-        # 3. 최종 행렬을 Transform3D 객체로 래핑하여 반환
-        # (베이스 좌표계 기준 EE 포즈)
-        pose_in_base_frame = Transform3D(T_total)
-        
-        # 월드 좌표계 기준 EE 포즈 (월드->베이스 @ 베이스->EE)
-        pose_in_world_frame = self.base_pose @ pose_in_base_frame
-        return pose_in_world_frame
+            # 누적 곱 (월드->베이스 @ ... @ 링크i)
+            T_current = T_current @ T_link
+            
+            # Transform3D 객체로 래핑하여 리스트에 추가
+            link_poses.append(Transform3D(T_current))
+            
+        return link_poses # 각 링크의 끝점(조인트) 포즈 (베이스 기준)
 
 # -----------------------------------------------------------
-# [수정됨] Camera 클래스
+# Camera 클래스
 # -----------------------------------------------------------
 class Camera:
     """
@@ -196,7 +257,6 @@ class Camera:
 
     def transform_pose_from_camera_to_base_frame(self, T_cam_object: Transform3D):
         """
-        [추가됨 - Goal 1]
         '카메라' 기준의 객체 포즈(T_cam_object)를
         '로봇 베이스' 기준의 객체 포즈(T_base_object)로 변환합니다.
         (로봇이 물체를 집기 위해 이 좌표가 필요합니다)
