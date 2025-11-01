@@ -76,15 +76,19 @@ ax.set_xlabel('X [mm]')
 ax.set_ylabel('Y [mm]')
 ax.set_zlabel('Z [mm]')
 ax.set_title('Robot-Camera-Object in 3D Space')
-ax.set_aspect('auto') # 축 비율 자동 조절
 
-# 축의 범위 설정 (로봇의 작업 공간에 따라 조정)
-# DH 파라미터가 mm 단위이므로, 시각화 범위도 mm로
+# [수정] ax.set_aspect('auto') 대신 축 범위를 기반으로 비율을 설정해 봅니다.
+# 이는 왜곡을 줄여줄 수 있습니다.
 plot_range = 1000 # ±1000mm 범위
 ax.set_xlim([-plot_range, plot_range])
 ax.set_ylim([-plot_range, plot_range])
-ax.set_zlim([0, plot_range * 1.5]) # Z축은 주로 양수, 높이 고려
+ax.set_zlim([0, plot_range * 1.5]) 
 
+# [!!! 핵심 추가 !!!]
+# 3D 뷰의 초기 각도를 설정합니다. (Z축이 위로 가도록)
+# elev: 뷰의 '높낮이' (고도). 90=위에서 바로 아래, 0=옆에서. (25~30도가 적당)
+# azim: 뷰의 '좌우 회전' (방위각). 
+ax.view_init(elev=25, azim=-60)
 
 # 5.2. 좌표계 그리기 헬퍼 함수
 def draw_frame(ax, T: Transform3D, label="", scale=100):
