@@ -18,7 +18,7 @@ print("\n[1] 카메라 보정 행렬(T_base_cam) 설정...")
 T_base_cam = Transform3D.from_xyz_rpy(x=1.0, y=0.0, z=0.5, 
                                       rx=0.0, ry=-90.0, rz=0.0, 
                                       degrees=True)
-camera = Camera(T_base_to_cam)
+camera = Camera(T_base_cam)
 
 
 # --- 2. 로봇팔 생성 및 조작 (DH 파라미터 파일 지정) ---
