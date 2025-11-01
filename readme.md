@@ -1,3 +1,5 @@
+\<p align="center"\>\<img src="example\_photo\_1.png" alt="Robot Arm Simulation"\>\</p\>
+
 # 🤖 6축 로봇팔 3D 시뮬레이터 (FK & 좌표계 변환)
 
 이 프로젝트는 6축 로봇팔(RB5-850)의 순기구학(Forward Kinematics)과 좌표계 변환을 시뮬레이션하는 Python 스크립트입니다.
