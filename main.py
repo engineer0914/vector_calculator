@@ -1,32 +1,44 @@
 # main.py
 
-from functions import Transform3D, RobotArm, Camera
+from functions_sim_for_850 import Transform3D, RobotArm, Camera
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# --- 0. 사전 준비 ---
-# [!] 중요: 이 스크립트를 실행하기 전에,
-# 터미널에서 create_dh_csv.py 를 먼저 실행해서 
-# 'rb5_850_dh.csv' 파일이 같은 폴더에 있는지 확인해야 합니다.
-# ( $ python create_dh_csv.py )
-# --------------------
 
-
-print("--- 로봇-카메라 좌표계 변환 시뮬레이션 (DH 파라미터 적용) ---")
+print("--- 로봇-카메라 DH 파라미터 적용 좌표계 변환 시뮬레이션 ---")
 
 # --- 1. 카메라 설정 (보정) ---
-print("\n[1] 카메라 보정 행렬(T_base_cam) 설정...")
 # T_base_cam: 로봇 베이스 기준 카메라의 포즈
-T_base_cam = Transform3D.from_xyz_rpy(x=0.0, y=500.0, z=500.0, # 단위를 mm로 조정
-                                      rx=0.0, ry=-180.0, rz=0.0, 
+# 로봇의 베이스를 0,0이라 할때 카메라가 위치 및 회전 상태를 보여줌
+
+print("\n[1] 카메라의 6D 지정후 4*4 변환")
+
+# 6D -> 4*4 행렬로 변환
+
+
+ay = -285.0
+T_base_cam = Transform3D.from_xyz_rpy(x=-115.0, y = ay, z=790.0,
+                                      rx=0.0, ry=180.0, rz=0.0,
                                       degrees=True)
+# print(T_base_cam)
+
 camera = Camera(T_base_cam)
-print(f"카메라 보정 (T_base_cam):\n{camera.T_base_cam}")
+
+# print(f"베이스 -> 카메라 (T_base_cam):\n{camera.T_base_cam}")
+# print(f"카메라 -> 베이스 (T_cam_base):\n{camera.T_cam_base}")
+
+
+
+
+
+
 
 
 # --- 2. 로봇팔 생성 및 조작 (DH 파라미터 파일 지정) ---
 print("\n[2] 로봇팔 생성 및 관절 이동...")
+
+# 로봇팔 DH 파라미터 가져오기
 try:
     robot = RobotArm(num_axes=6, dh_param_file='rb5_850_dh.csv')
 except FileNotFoundError as e:
@@ -35,9 +47,13 @@ except FileNotFoundError as e:
     exit()
 
 # 로봇 관절 각도를 'Home' 자세 (예시)로 설정 (단위: 도)
-joint_angles = [0, 0, 90, 0, 90, -90] # 관절 각도 변경 가능
 joint_angles = [0, 0, 0, 0, 0, 0] # 관절 각도 변경 가능
 robot.set_joint_angles(joint_angles)
+
+
+
+
+
 
 
 # --- 3. 로봇 엔드 이펙터(EE) 포즈 계산 (실제 FK) ---
@@ -48,11 +64,18 @@ print("--- 로봇 EE 포즈 (T_base_ee) ---")
 print(T_base_ee)
 
 
+
+
+
+
+
 # --- 4. (Goal 1) 검출된 객체 포즈 변환 시뮬레이션 ---
 print("\n[4] 카메라가 검출한 객체 포즈 변환...")
-# 가상: 카메라가 자신의 좌표계 기준으로 (x=100, z=800mm) 앞에 있고,
-# y축으로 10도 기울어진 물체를 검출했다고 가정합니다.
-T_cam_object = Transform3D.from_xyz_rpy(x=100.0, y=0.0, z=800.0, # 단위를 mm로 조정
+
+# 카메라 -> 물체
+# x 100, z 800, y 10 deg
+
+T_cam_object = Transform3D.from_xyz_rpy(x=250.0, y=300.0, z=500.0,
                                         rx=0, ry=10, rz=0, degrees=True)
 
 print("--- (카메라 기준) 검출된 객체 포즈 (T_cam_object) ---")
@@ -61,9 +84,13 @@ print(T_cam_object)
 # 이제 로봇이 이 물체를 집을 수 있도록 '로봇 베이스' 기준으로 변환합니다.
 T_base_object = camera.transform_pose_from_camera_to_base_frame(T_cam_object)
 
-print("\n--- (로봇 베이스 기준) 변환된 객체 포즈 (T_base_object) ---")
+print("\n--- 로봇 베이스 -> 객체 포즈 (T_base_object) ---")
 print(T_base_object)
-print("-> 로봇은 이 (x,y,z)와 (rx,ry,rz) 값을 타겟으로 역기구학(IK)을 계산해야 합니다.")
+
+
+
+
+
 
 
 print("\n--- 5. 3D 시각화 ---")
@@ -81,7 +108,7 @@ ax.set_xlim([-plot_range, plot_range])
 ax.set_ylim([-plot_range, plot_range])
 ax.set_zlim([0, plot_range * 1.5]) 
 
-ax.view_init(elev=25, azim=-60) 
+ax.view_init(elev=25, azim=45)
 
 
 # 5.2. 좌표계 그리기 헬퍼 함수
@@ -116,11 +143,11 @@ joint_points = [Transform3D.identity().get_origin()] # 베이스 원점을 첫 �
 for i, T_link in enumerate(link_poses):
     joint_points.append(T_link.get_origin())
     
-    # [수정] 엔드 이펙터(마지막 링크의 끝)는 다른 색상으로
+    # 엔드 이펙터(마지막 링크의 끝)는 다른 색상으로
     if i == len(link_poses) - 1: # 마지막 링크인 경우
         draw_frame(ax, T_link, label=f'EE Frame', scale=70, linewidth=2) # 엔드 이펙터 프레임
-        # ax.scatter(T_link.get_origin()[0], T_link.get_origin()[1], T_link.get_origin()[2],
-        #            marker='X', s=200, color='cyan', label='End Effector Position', depthshade=True) # 더 큰 마커
+        ax.scatter(T_link.get_origin()[0], T_link.get_origin()[1], T_link.get_origin()[2],
+                   marker='X', s=200, color='cyan', label='End Effector Position', depthshade=True) # 더 큰 마커
     else:
         draw_frame(ax, T_link, label=f'Link {i+1} End', scale=50, linewidth=1.5) # 일반 링크 끝의 좌표계
 
@@ -129,7 +156,7 @@ for i in range(len(joint_points) - 1):
     p1 = joint_points[i]
     p2 = joint_points[i+1]
     
-    # [수정] 엔드 이펙터 연결 선도 다른 색상으로
+    # 엔드 이펙터 연결 선도 다른 색상으로
     if i == len(joint_points) - 2: # 마지막 조인트-EE 연결 선
         ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], 'c-', linewidth=4, alpha=0.9, label='EE Link') # Cyan
     else:
@@ -144,7 +171,7 @@ ax.scatter(cam_origin[0], cam_origin[1], cam_origin[2],
            marker='^', s=200, color='purple', label='Camera Position', depthshade=True)
 
 
-# [!!! 추가 !!!] 카메라 시선 방향 벡터 그리기
+# 카메라 시선 방향 벡터 그리기
 print("카메라 시선 방향을 그립니다...")
 cam_origin_point = camera.T_base_cam.get_origin()
 # 카메라의 Z축 방향이 일반적으로 시선 방향입니다 (Transform3D의 Z축 사용)
@@ -152,7 +179,7 @@ cam_origin_point = camera.T_base_cam.get_origin()
 cam_rot_mat = camera.T_base_cam.get_rotation_matrix()
 view_direction_unit_vector = cam_rot_mat[:, 2] # Z축 방향 벡터
 
-view_distance = 500 # 시선 방향을 그릴 거리 (mm)
+view_distance = 150 # 시선 방향을 그릴 거리 (mm)
 target_point = cam_origin_point + view_direction_unit_vector * view_distance
 
 ax.plot([cam_origin_point[0], target_point[0]], 
@@ -169,26 +196,39 @@ ax.scatter(obj_origin[0], obj_origin[1], obj_origin[2],
            marker='s', s=150, color='orange', label='Object Position', depthshade=True)
 
 
+# 5.7 카메라 - 객체 간 점선 그리기
+cam_origin_point = camera.T_base_cam.get_origin()
+
+target_point = T_base_object.get_origin()
+
+ax.plot([cam_origin_point[0], target_point[0]], 
+        [cam_origin_point[1], target_point[1]], 
+        [cam_origin_point[2], target_point[2]], 
+        '--o', color='green', linewidth=1.5, markersize=5, label='Cam - Obj')
+
+
+
 # 범례 표시
 ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1.0), fontsize=10) # 범례를 그래프 밖에 표시
 
-# [추가] 축 색상 키(표) 텍스트 상자 추가
+# 축 색상 키(표) 텍스트 상자 추가
 key_text = "Axis Color Key (표)\n" \
            "----------------------\n" \
            "  Red   = X-axis\n" \
            "  Green = Y-axis\n" \
            "  Blue  = Z-axis"
 
-# [!!!] 수정된 부분: ax.text -> ax.text2D [!!!]
+
+
 # 범례(legend) 아래쪽에 텍스트 상자를 위치시킵니다.
 ax.text2D(1.05, 0.75, key_text, transform=ax.transAxes, 
           fontsize=10, verticalalignment='top', 
           bbox=dict(facecolor='white', alpha=0.9, boxstyle='round,pad=0.5'))
 
-# [수정] 범례와 텍스트 상자가 잘리지 않도록 그래프 레이아웃을 조정합니다.
 fig.tight_layout(rect=[0, 0, 0.8, 1]) 
 
 # 3D 그래프 보여주기
 plt.show()
-
 print("\n--- 시뮬레이션 종료 ---") 
+
+

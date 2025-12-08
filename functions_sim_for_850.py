@@ -1,11 +1,11 @@
-# functions.py 
+# functions.py
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 import pandas as pd
 import os
-import matplotlib.pyplot as plt # 3D 시각화용
-from mpl_toolkits.mplot3d import Axes3D # 3D 시각화용
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class Transform3D:
     """
@@ -89,7 +89,6 @@ class Transform3D:
         new_matrix = self.matrix @ other.matrix
         return Transform3D(new_matrix)
 
-    # [!!!] 수정된 부분 [!!!]
     def __str__(self):
         """
         print() 함수로 객체를 출력할 때의 형식을 지정합니다.
@@ -103,8 +102,6 @@ class Transform3D:
         euler_str = f"[{euler[0]:.2f}, {euler[1]:.2f}, {euler[2]:.2f}]"
         
         # 4x4 행렬을 numpy.array2string을 사용해 포맷팅
-        # precision=2: 소수점 2자리
-        # suppress_small=True: scientific notation(지수 표기법) 억제
         # formatter: 모든 float를 "0.2f" (소수점 2자리 고정) 형식으로 강제
         matrix_str_np = np.array2string(self.matrix, 
                                         precision=2, 
@@ -115,8 +112,7 @@ class Transform3D:
                 f"  Translation (x,y,z): {trans_str}\n"
                 f"  Euler Angles (rx,ry,rz): {euler_str} (deg)\n"
                 f"  4x4 Matrix:\n{matrix_str_np}")
-    
-    # --- [시각화 헬퍼 메서드] ---
+
     
     def get_origin(self):
         """이 변환의 원점(이동 벡터)을 반환합니다."""
@@ -150,8 +146,7 @@ class RobotArm:
         self.num_axes = num_axes
         self.joint_angles = np.zeros(num_axes) # (단위: 도)
         self.base_pose = Transform3D.identity() 
-        
-        # DH 파라미터 로드
+
         if not os.path.exists(dh_param_file):
             raise FileNotFoundError(f"DH 파라미터 파일 '{dh_param_file}'을 찾을 수 없습니다. "
                                   f"create_dh_csv.py를 먼저 실행하세요.")
@@ -172,7 +167,6 @@ class RobotArm:
         """
         [비공개 메서드]
         Standard DH 파라미터 1줄로 4x4 변환 행렬(T) 1개를 생성합니다.
-        (이미지 2의 행렬 공식 기반)
         """
         # 모든 각도를 라디안으로 변환
         th_rad = np.deg2rad(theta_deg)
@@ -253,12 +247,14 @@ class Camera:
     로봇 베이스 좌표계 기준 카메라의 상대 위치(보정 행렬)를 가집니다.
     """
     def __init__(self, T_base_to_cam: Transform3D):
-        # T_base_cam: 로봇 베이스 기준 카메라의 포즈 (Extrinsic)
+
+        # T_base_cam: 로봇 베이스를 기준으로 본 카메라의 포즈
         self.T_base_cam = T_base_to_cam
-        
+
         # T_cam_base: 카메라 기준 로봇 베이스의 포즈 (역변환)
         self.T_cam_base = T_base_to_cam.inverse()
-        print("📷 카메라가 생성되고 보정 행렬이 설정되었습니다.")
+
+        print("📷 카메라가 생성되고 위치에 대한 행렬 생성.")
 
     def transform_pose_from_base_to_camera_frame(self, T_base_object: Transform3D):
         """
