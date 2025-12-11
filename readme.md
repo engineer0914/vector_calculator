@@ -29,7 +29,7 @@ rb850e 기준으로 제작되었습니다.
 
 2.  **DH 파라미터 생성 (최초 1회 실행):**
 
-    (dhparam_standard.png)
+    ![Robot Arm Simulation](dhparam_standard.png)
     
     `dhparameter_maker.py` 스크립트를 실행하여 로봇팔의 DH 파라미터가 담긴 `rb5_850_dh.csv` 파일을 생성합니다.
 
