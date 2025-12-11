@@ -31,6 +31,8 @@ rb850e 기준으로 제작되었습니다.
 
     ![Robot Arm Simulation](dhparam_standard.png)
 
+    ![Robot Arm Simulation](scipy_analysis.png)
+
     reference: https://velog.io/@joongwon00/Robotics-1.D-H-%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0
 
     `dhparameter_maker.py` 스크립트를 실행하여 로봇팔의 DH 파라미터가 담긴 `rb5_850_dh.csv` 파일을 생성합니다.
