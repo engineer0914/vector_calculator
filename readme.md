@@ -28,13 +28,16 @@ rb850e 기준으로 제작되었습니다.
     ```
 
 2.  **DH 파라미터 생성 (최초 1회 실행):**
+
+    (dhparam_standard.png)
+    
     `dhparameter_maker.py` 스크립트를 실행하여 로봇팔의 DH 파라미터가 담긴 `rb5_850_dh.csv` 파일을 생성합니다.
 
     ```bash
     python create_dh_csv.py
     ```
 
-3.  **메인 시뮬레이터 실행:**
+4.  **메인 시뮬레이터 실행:**
     `main.py`를 실행하면 스크립트에 정의된 값을 바탕으로 3D 그래프가 나타납니다.
 
     ```bash
