@@ -238,6 +238,42 @@ class RobotArm:
             
         return link_poses # 각 링크의 끝점(조인트) 포즈 (베이스 기준)
 
+    # [추가된 핵심 함수] 자코비안 계산
+    def get_jacobian(self):
+        """
+        현재 관절 각도에서의 Geometric Jacobian Matrix (6x6)를 계산하여 반환합니다.
+        MoveL(직선 이동) 시뮬레이션에 필수적입니다.
+        """
+        poses = self.get_all_link_poses()
+        p_e = poses[-1].get_translation() # 엔드 이펙터 위치
+        
+        # 회전축(Z)과 위치(P)를 저장할 리스트
+        # Base Frame (0번) 초기화
+        z_axes = [np.array([0, 0, 1])] # z0
+        p_origins = [np.array([0, 0, 0])] # p0
+        
+        # Link 1 ~ N-1의 Z축과 원점 위치 수집
+        for i in range(self.num_axes - 1):
+            R_mat = poses[i].get_rotation_matrix()
+            pos = poses[i].get_translation()
+            z_axes.append(R_mat[:, 2]) # 회전 행렬의 3번째 열이 Z축
+            p_origins.append(pos)
+
+        # 6x6 자코비안 행렬 생성
+        J = np.zeros((6, self.num_axes))
+
+        for i in range(self.num_axes):
+            z_i = z_axes[i]     # z_{i-1} (i번째 관절의 회전축)
+            p_i = p_origins[i]  # p_{i-1} (i번째 관절의 위치)
+            
+            # [선속도 성분] J_v = z_{i-1} x (p_e - p_{i-1})
+            J[:3, i] = np.cross(z_i, p_e - p_i)
+            
+            # [각속도 성분] J_w = z_{i-1}
+            J[3:, i] = z_i
+            
+        return J
+
 # -----------------------------------------------------------
 # Camera 클래스
 # -----------------------------------------------------------
