@@ -239,3 +239,20 @@ T_base_object = camera.transform_pose_from_camera_to_base_frame(T_cam_object)
   * **의미:** "카메라에서 오른쪽 250mm"에 있다는 정보를 "로봇 팔을 오른쪽으로 얼마나 뻗어야 하는지"로 번역하는 과정입니다.
   * **해석:** 로봇 팔이 실제로 이동해야 할 \*\*최종 목표점(Goal Pose)\*\*입니다. 이 `T_base_object` 좌표를 로봇의 역기구학(Inverse Kinematics) 솔버에 넣어야 로봇이 물체를 정확히 파지(Grasping)할 수 있습니다.
 
+**6. 타입 어노테이션(Type Annotation)**
+
+T_cam_object: Transform3D 부분은 파이썬 3.5부터 도입된 타입 힌트(Type Hint) 또는 **타입 어노테이션(Type Annotation)**이라는 문법입니다.
+
+파이썬은 원래 변수의 타입을 미리 정하지 않는(동적 타이핑) 언어지만, 코드가 복잡해지면서 "이 함수에는 어떤 종류의 데이터가 들어와야 하는지" 명시해 주기 위해 사용합니다.
+
+구조 뜯어보기
+Python
+
+def 함수이름(매개변수명: 클래스나_자료형):
+질문하신 코드를 해석하면 다음과 같습니다:
+
+T_cam_object: 이 함수 안에서 사용할 변수의 이름입니다.
+
+: (콜론): 변수 이름과 타입을 구분하는 기호입니다.
+
+Transform3D: 이 변수가 Transform3D 클래스로 만든 객체여야 한다는 것을 알려주는 표식입니다.
