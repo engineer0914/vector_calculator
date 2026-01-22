@@ -19,7 +19,7 @@ except FileNotFoundError as e:
 
 # 1-2. 로봇 자세 설정 (Home 포즈 등)
 # 카메라가 물체를 잘 바라보도록 4, 5번 관절을 좀 굽혀봅니다.
-joint_angles = [0, 0, -90, -90, 0, 0] 
+joint_angles = [0, 0, 90, 0, 0, 0]
 robot.set_joint_angles(joint_angles)
 
 # 1-3. 현재 엔드 이펙터(EE) 포즈 계산 (T_base_ee)
@@ -34,7 +34,7 @@ print("\n[1] 로봇 EE 포즈 (Base 기준):\n", T_base_ee)
 # 2-1. 카메라 오프셋 (엔드이펙터 -> 카메라)
 # "엔드이펙터 좌표계에서 x축 50mm, z축 50mm 이동"
 # 회전은 없다고 가정 (필요시 rx, ry, rz 추가)
-T_ee_cam = Transform3D.from_xyz_rpy(x=50.0, y=0.0, z=50.0, rx=0, ry=0, rz=0)
+T_ee_cam = Transform3D.from_xyz_rpy(x=50.0, y=0.0, z=80.0, rx=0, ry=0, rz=0)
 
 # 로봇 베이스 기준 카메라 포즈 계산 (T_base_cam = T_base_ee @ T_ee_cam)
 T_base_cam = T_base_ee @ T_ee_cam
